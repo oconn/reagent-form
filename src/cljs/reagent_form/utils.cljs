@@ -11,6 +11,19 @@
    form-state))
 
 (defn get-form-errors
+  "Returns a list of existing form errors. NOTE: This will not check
+  to see if there are errors with the existing data. To get errors
+  for existing data, see `calculate-form-errors`"
+  [form-state]
+  (reduce
+   (fn [form-errors [field-key {:keys [errors]}]]
+     (concat form-errors (map (fn [message] {:field-key field-key
+                                            :message message})
+                              errors)))
+   []
+   form-state))
+
+(defn calculate-form-errors
   "Returns form errors as tuples consisting of [field-key error-message]"
   [form-state]
   (map
@@ -28,6 +41,34 @@
        [field-key errors]))
    form-state))
 
+(defn invoke-or-return
+  "If the provided value is a function, return the invoked value of
+  the function, otherwise return the value"
+  [value]
+  (if (fn? value) (value) value))
+
+(defn format-field-state
+  "Takes field state and returns a formated version"
+  [{:keys [default-errors
+           default-value
+           masks
+           transformers
+           validators]
+    :or {default-errors []
+         masks []
+         transformers []
+         validators []}}]
+  {:data (invoke-or-return default-value)
+   :errors (invoke-or-return default-errors)
+   :masks (invoke-or-return masks)
+   :validators (invoke-or-return validators)
+   :transformers (invoke-or-return transformers)
+   :reset-with {:default-errors default-errors
+                :default-value default-value
+                :masks masks
+                :transformers transformers
+                :validators validators}})
+
 (defn update-form-errors!
   "Applies errors to form state"
   [form-state form-errors]
@@ -44,7 +85,7 @@
   "Updates form state with any generated errors. Returns true if the
   form is free of errors, false if it contains an error"
   [form-state]
-  (let [errors (get-form-errors @form-state)]
+  (let [errors (calculate-form-errors @form-state)]
     (update-form-errors! form-state errors)
 
     (empty? (->> errors
@@ -52,36 +93,25 @@
                  (flatten)
                  (vec)))))
 
-(defn invoke-or-return
-  "If the provided value is a function, return the invoked value of
-  the function, otherwise return the value"
-  [value]
-  (if (fn? value) (value) value))
+(defn reset-form!
+  "Resets a form back to a default state"
+  [form-state]
+  (->> @form-state
+       (reduce (fn [state [field-key field-state]]
+                 (assoc state
+                        field-key
+                        (format-field-state
+                         (:reset-with field-state))))
+               {})
+       (reset! form-state)))
 
 (defn initialize-field!
   "Initialized a field data structure"
   [form-state
    field-key
-   {:keys [default-errors
-           default-value
-           masks
-           transformers
-           validators]
-    :or {default-errors []
-         masks []
-         transformers []
-         validators []}}]
+   field-state]
   (swap! form-state
-         #(assoc % field-key {:data (invoke-or-return default-value)
-                              :errors (invoke-or-return default-errors)
-                              :masks (invoke-or-return masks)
-                              :validators (invoke-or-return validators)
-                              :transformers (invoke-or-return transformers)
-                              :reset-with {:data default-value
-                                           :errors default-errors
-                                           :masks masks
-                                           :validators validators
-                                           :transformers transformers}})))
+         #(assoc % field-key (format-field-state field-state))))
 
 (defn update-field-value!
   "Updates a form with field level changes"

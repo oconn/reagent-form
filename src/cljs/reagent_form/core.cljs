@@ -4,8 +4,10 @@
             [reagent-form.components.form :as form]
             [reagent-form.components.input :as input]
             [reagent-form.components.field-error :as field-error]
+            [reagent-form.components.form-errors :as form-errors]
 
-            [reagent-form.utils :refer [add-class]]))
+            [reagent-form.utils :refer [add-class
+                                        reset-form!]]))
 
 (defn- rf-node?
   [node key]
@@ -13,13 +15,14 @@
        (contains? (second node) key)))
 
 (defn- walk-node
-  [{:keys [id is-submitting]} form-state]
+  [{:keys [id is-submitting]}
+   form-state]
 
   (when (and (not (nil? is-submitting))
              (not= (type is-submitting)
                    reagent.ratom/Reaction))
     (throw
-     (js/Error. (str "When passing \"is-submitting\" into re-frame-from, "
+     (js/Error. (str "When passing \"is-submitting\" into reagent-from, "
                      "you must pass a reagent ratom"))))
 
   (fn [node]
@@ -38,13 +41,30 @@
       [field-error/mount-field-error {:node node
                                       :form-state form-state}]
 
+      (rf-node? node :rf/form-errors)
+      [form-errors/mount-form-errors {:node node
+                                      :form-state form-state}]
+
       :else
       node)))
 
 (defn form
-  [form-data html]
+  [{:keys [on-initialized
+           on-form-close]
+    :or {on-initialized identity
+         on-form-close identity}
+    :as form-data}
+   html]
   (let [form-state (reagent/atom {})]
-    [postwalk (walk-node form-data form-state) html]))
+    (reagent/create-class
+     {:component-did-mount
+      (fn [_]
+        (on-initialized {:reset-form #(reset-form! form-state)}))
+      :component-will-unmount
+      #(on-form-close)
+      :reagent-render
+      (fn [form-data html]
+        [postwalk (walk-node form-data form-state) html])})))
 
 (defn input
   [{:keys [default-value

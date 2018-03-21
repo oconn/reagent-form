@@ -3,7 +3,8 @@
                                         initialize-field!
                                         update-field-value!
                                         validate-field!
-                                        get-field-value]]))
+                                        get-field-value
+                                        get-field-errors]]))
 
 (defn- get-value
   "Returns an inputs value"
@@ -34,7 +35,14 @@
         (:rf/input params)
 
         update-field-value-fn
-        #(update-field-value! form-state field-key %)
+        #(do
+           (update-field-value! form-state field-key %)
+
+           ;; Once the form has been submitted, live (on-change) validation will
+           ;; take over for inputs until the error is cleared, then it will
+           ;; return to default behavior (only validate on-blur)
+           (when-not (empty? (get-field-errors @form-state field-key))
+             (validate-field! form-state field-key)))
 
         mounted-node
         (assoc-in node [1]

@@ -1,6 +1,5 @@
 (ns reagent-form.components.form
   (:require [reagent-form.utils :refer [get-form-data
-                                        get-form-errors
                                         update-form-errors!
                                         validate-form!]]))
 
