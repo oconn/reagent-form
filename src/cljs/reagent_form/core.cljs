@@ -18,10 +18,9 @@
 (defn- render-custom-field
   "Extension point for users to provider their own custom components "
   [{:keys [node] :as params}]
-  (let [{:keys [render props]
-         :or {props {}}}
+  (let [{:keys [render]}
         (get-in node [1 :rf/custom-field])]
-    [render params props]))
+    [render params]))
 
 (defn- walk-node
   "Walks the form replacing rf fields with form aware components"
