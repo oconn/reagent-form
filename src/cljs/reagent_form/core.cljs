@@ -10,12 +10,22 @@
                                         reset-form!]]))
 
 (defn- rf-node?
+  "Checks to see if any given node is an rf field"
   [node key]
   (and (coll? node)
        (contains? (second node) key)))
 
+(defn- render-custom-field
+  "Extension point for users to provider their own custom components "
+  [{:keys [node] :as params}]
+  (let [{:keys [render props]
+         :or {props {}}}
+        (get-in node [1 :rf/custom-field])]
+    [render params props]))
+
 (defn- walk-node
-  [{:keys [id is-submitting]}
+  "Walks the form replacing rf fields with form aware components"
+  [{:keys [id is-submitting custom-fields]}
    form-state]
 
   (when (and (not (nil? is-submitting))
@@ -44,6 +54,11 @@
       (rf-node? node :rf/form-errors)
       [form-errors/mount-form-errors {:node node
                                       :form-state form-state}]
+
+      (rf-node? node :rf/custom-field)
+      (render-custom-field {:node node
+                            :form-state form-state
+                            :is-submitting is-submitting})
 
       :else
       node)))
