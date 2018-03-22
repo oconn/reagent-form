@@ -117,6 +117,12 @@
      [:div {:class (add-class "reagent-form-label" label-class)}
       [:label {:for field-key} label]])
 
+   [:p {:rf/field-hint {:field-key field-key}
+        :class (add-class "reagent-form-hint" hint-class)}]
+
+   [:p {:rf/field-error {:field-key field-key}
+        :class (add-class "reagent-form-error" error-class)}]
+
    [:input (cond-> {:rf/input (select-keys params [:default-errors
                                                    :default-hints
                                                    :default-value
@@ -131,13 +137,7 @@
                     :id field-key
                     :type type
                     :class (add-class "reagent-form-input" input-class)}
-             placeholder (assoc :placeholder placeholder))]
-
-   [:p {:rf/field-hint {:field-key field-key}
-        :class (add-class "reagent-form-hint" hint-class)}]
-
-   [:p {:rf/field-error {:field-key field-key}
-        :class (add-class "reagent-form-error" error-class)}]])
+             placeholder (assoc :placeholder placeholder))]])
 
 (defn textarea
   [{:keys [error-class
@@ -159,6 +159,12 @@
      [:div {:class (add-class "reagent-form-label" label-class)}
       [:label {:for field-key} label]])
 
+   [:p {:rf/field-hint {:field-key field-key}
+        :class (add-class "reagent-form-hint" hint-class)}]
+
+   [:p {:rf/field-error {:field-key field-key}
+        :class (add-class "reagent-form-error" error-class)}]
+
    [:textarea (cond-> {:rf/textarea (select-keys params [:default-errors
                                                          :default-hints
                                                          :default-value
@@ -174,10 +180,4 @@
                        :style style
                        :class (add-class "reagent-form-textarea"
                                          textarea-class)}
-                placeholder (assoc :placeholder placeholder))]
-
-   [:p {:rf/field-hint {:field-key field-key}
-        :class (add-class "reagent-form-hint" hint-class)}]
-
-   [:p {:rf/field-error {:field-key field-key}
-        :class (add-class "reagent-form-error" error-class)}]])
+                placeholder (assoc :placeholder placeholder))]])
