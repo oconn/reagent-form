@@ -5,6 +5,7 @@
             [reagent-form.components.input :as input]
             [reagent-form.components.field-error :as field-error]
             [reagent-form.components.form-errors :as form-errors]
+            [reagent-form.components.submit-button :as submit-button]
 
             [reagent-form.utils :refer [add-class
                                         reset-form!]]))
@@ -28,8 +29,9 @@
    form-state]
 
   (when (and (not (nil? is-submitting))
-             (not= (type is-submitting)
-                   reagent.ratom/Reaction))
+             (not (contains? #{reagent.ratom/Reaction
+                               reagent.ratom/RAtom}
+                             (type is-submitting))))
     (throw
      (js/Error. (str "When passing \"is-submitting\" into reagent-from, "
                      "you must pass a reagent ratom"))))
@@ -53,6 +55,11 @@
       (rf-node? node :rf/form-errors)
       [form-errors/mount-form-errors {:node node
                                       :form-state form-state}]
+
+      (rf-node? node :rf/submit-button)
+      [submit-button/mount-submit-button {:node node
+                                          :form-state form-state
+                                          :is-submitting is-submitting}]
 
       (rf-node? node :rf/custom-field)
       (render-custom-field {:node node
