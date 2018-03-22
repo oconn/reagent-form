@@ -50,21 +50,29 @@
 (defn format-field-state
   "Takes field state and returns a formated version"
   [{:keys [default-errors
+           default-hints
            default-value
+           hint-triggers
            masks
            transformers
            validators]
     :or {default-errors []
+         default-hints []
+         hint-triggers []
          masks []
          transformers []
          validators []}}]
   {:data (invoke-or-return default-value)
    :errors (invoke-or-return default-errors)
+   :hints (invoke-or-return default-hints)
+   :hint-triggers (invoke-or-return hint-triggers)
    :masks (invoke-or-return masks)
    :validators (invoke-or-return validators)
    :transformers (invoke-or-return transformers)
    :reset-with {:default-errors default-errors
+                :default-hints default-hints
                 :default-value default-value
+                :hint-triggers hint-triggers
                 :masks masks
                 :transformers transformers
                 :validators validators}})
@@ -116,11 +124,19 @@
 (defn update-field-value!
   "Updates a form with field level changes"
   [form-state field-key value]
-  (let [{:keys [masks]} (field-key @form-state)]
+  (let [{:keys [masks hint-triggers]} (field-key @form-state)]
     (swap! form-state
-           #(assoc-in %
-                      [field-key :data]
-                      ((apply comp masks) value)))))
+           #(cond-> (assoc-in %
+                              [field-key :data]
+                              ((apply comp masks) value))
+              (not (empty? hint-triggers))
+              (assoc-in [field-key :hints]
+                        (reduce (fn [hints {:keys [trigger message]}]
+                                  (if (trigger value)
+                                    (conj hints message)
+                                    hints))
+                                []
+                                hint-triggers))))))
 
 (defn validate-field!
   "Checks to see if a field is valid an updates errors if they exist"
@@ -145,7 +161,13 @@
   [form-state field-key]
   (get-in form-state [field-key :errors]))
 
+(defn get-field-hints
+  "Returns the field's hints"
+  [form-state field-key]
+  (get-in form-state [field-key :hints]))
+
 (defn add-class
+  "Appends a class to an existing class if it exists"
   [class-name custom-class]
   (str class-name
        (when custom-class

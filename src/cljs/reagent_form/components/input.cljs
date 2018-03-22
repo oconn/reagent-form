@@ -23,8 +23,11 @@
         params
         (second node)
 
-        {:keys [default-value
+        {:keys [default-errors
+                default-hints
+                default-value
                 field-key
+                hint-triggers
                 masks
                 on-blur
                 on-change
@@ -69,7 +72,10 @@
 
     (initialize-field! form-state
                        field-key
-                       {:default-value default-value
+                       {:default-errors (or default-errors [])
+                        :default-hints (or default-hints [])
+                        :default-value default-value
+                        :hint-triggers (or hint-triggers [])
                         :masks (or masks [])
                         :transformers (or transformers [])
                         :validators (or validators [])})

@@ -4,6 +4,7 @@
             [reagent-form.components.form :as form]
             [reagent-form.components.input :as input]
             [reagent-form.components.field-error :as field-error]
+            [reagent-form.components.field-hint :as field-hint]
             [reagent-form.components.form-errors :as form-errors]
             [reagent-form.components.submit-button :as submit-button]
 
@@ -52,6 +53,10 @@
       [field-error/mount-field-error {:node node
                                       :form-state form-state}]
 
+      (rf-node? node :rf/field-hint)
+      [field-hint/mount-field-hint {:node node
+                                    :form-state form-state}]
+
       (rf-node? node :rf/form-errors)
       [form-errors/mount-form-errors {:node node
                                       :form-state form-state}]
@@ -80,7 +85,8 @@
     (reagent/create-class
      {:component-did-mount
       (fn [_]
-        (on-initialized {:reset-form #(reset-form! form-state)}))
+        (on-initialized {:form-state form-state
+                         :reset-form #(reset-form! form-state)}))
       :component-will-unmount
       #(on-form-close)
       :reagent-render
@@ -88,39 +94,40 @@
         [postwalk (walk-node form-data form-state) html])})))
 
 (defn input
-  [{:keys [default-value
-           error-class
+  [{:keys [error-class
            field-key
            form-field-class
+           hint-class
            input-class
            type
            label
            label-class
-           masks
-           on-blur
-           on-change
-           placeholder
-           transformers
-           validators]
+           placeholder]
     :or {default-value ""
-         type :text}}]
+         type :text}
+    :as params}]
   [:div {:class (add-class "reagent-form-field" form-field-class)}
    (when label
-     [:label {:for field-key
-              :class (add-class "reagent-form-label" label-class)}
-      label])
+     [:div {:class (add-class "reagent-form-label" label-class)}
+      [:label {:for field-key} label]])
 
-   [:input (cond-> {:rf/input {:field-key field-key
-                               :validators validators
-                               :transformers transformers
-                               :on-change on-change
-                               :masks masks
-                               :default-value default-value
-                               :placeholder placeholder}
+   [:input (cond-> {:rf/input (select-keys params [:default-errors
+                                                   :default-hints
+                                                   :default-value
+                                                   :field-key
+                                                   :hint-triggers
+                                                   :masks
+                                                   :on-blur
+                                                   :on-change
+                                                   :transformers
+                                                   :validators])
                     :id field-key
                     :type type
                     :class (add-class "reagent-form-input" input-class)}
              placeholder (assoc :placeholder placeholder))]
+
+   [:p {:rf/field-hint {:field-key field-key}
+        :class (add-class "reagent-form-hint" hint-class)}]
 
    [:p {:rf/field-error {:field-key field-key}
         :class (add-class "reagent-form-error" error-class)}]])
