@@ -3,6 +3,7 @@
             [reagent.core :as reagent]
             [reagent-form.components.form :as form]
             [reagent-form.components.input :as input]
+            [reagent-form.components.textarea :as textarea]
             [reagent-form.components.field-error :as field-error]
             [reagent-form.components.field-hint :as field-hint]
             [reagent-form.components.form-errors :as form-errors]
@@ -48,6 +49,11 @@
       [input/mount-input {:node node
                           :form-state form-state
                           :is-submitting is-submitting}]
+
+      (rf-node? node :rf/textarea)
+      [textarea/mount-textarea {:node node
+                                :form-state form-state
+                                :is-submitting is-submitting}]
 
       (rf-node? node :rf/field-error)
       [field-error/mount-field-error {:node node
@@ -120,11 +126,55 @@
                                                    :on-blur
                                                    :on-change
                                                    :transformers
-                                                   :validators])
+                                                   :validators
+                                                   :validate-on-blur])
                     :id field-key
                     :type type
                     :class (add-class "reagent-form-input" input-class)}
              placeholder (assoc :placeholder placeholder))]
+
+   [:p {:rf/field-hint {:field-key field-key}
+        :class (add-class "reagent-form-hint" hint-class)}]
+
+   [:p {:rf/field-error {:field-key field-key}
+        :class (add-class "reagent-form-error" error-class)}]])
+
+(defn textarea
+  [{:keys [error-class
+           field-key
+           form-field-class
+           hint-class
+           style
+           textarea-class
+           type
+           label
+           label-class
+           placeholder]
+    :or {default-value ""
+         style {}
+         type :text}
+    :as params}]
+  [:div {:class (add-class "reagent-form-field" form-field-class)}
+   (when label
+     [:div {:class (add-class "reagent-form-label" label-class)}
+      [:label {:for field-key} label]])
+
+   [:textarea (cond-> {:rf/textarea (select-keys params [:default-errors
+                                                         :default-hints
+                                                         :default-value
+                                                         :field-key
+                                                         :hint-triggers
+                                                         :masks
+                                                         :on-blur
+                                                         :on-change
+                                                         :transformers
+                                                         :validators
+                                                         :validate-on-blur])
+                       :id field-key
+                       :style style
+                       :class (add-class "reagent-form-textarea"
+                                         textarea-class)}
+                placeholder (assoc :placeholder placeholder))]
 
    [:p {:rf/field-hint {:field-key field-key}
         :class (add-class "reagent-form-hint" hint-class)}]

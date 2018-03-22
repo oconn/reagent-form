@@ -1,4 +1,4 @@
-(ns reagent-form.components.input
+(ns reagent-form.components.textarea
   (:require [reagent-form.utils :refer [invoke-or-return
                                         initialize-field!
                                         update-field-value!
@@ -8,14 +8,9 @@
 
 (defn- get-value
   "Returns an inputs value"
-  [target]
-  (let [type (.-type target)]
-    (case type
-    "radio" (.-id target)
-    "checkbox" (.-checked target)
-    (.-value target))))
+  [target] (.-value target))
 
-(defn mount-input
+(defn mount-textarea
   [{:keys [node is-submitting form-state]}]
   (let [!ref
         (atom nil)
@@ -36,7 +31,7 @@
                 validators
                 validate-on-blur]
          :as rf-params}
-        (:rf/input params)
+        (:rf/textarea params)
 
         update-field-value-fn
         #(do
@@ -52,7 +47,7 @@
         (assoc-in node [1]
                   (cond->
                       (-> params
-                          (dissoc :rf/input)
+                          (dissoc :rf/textarea)
                           (merge {:ref
                                   #(reset! !ref %)
 
