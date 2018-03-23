@@ -3,7 +3,6 @@
             [reagent.core :as reagent]
             [reagent-form.components.form :as form]
             [reagent-form.components.input :as input]
-            [reagent-form.components.textarea :as textarea]
             [reagent-form.components.field-error :as field-error]
             [reagent-form.components.field-hint :as field-hint]
             [reagent-form.components.form-errors :as form-errors]
@@ -27,7 +26,7 @@
 
 (defn- walk-node
   "Walks the form replacing rf fields with form aware components"
-  [{:keys [id is-submitting custom-fields]}
+  [{:keys [is-submitting custom-fields]}
    form-state]
 
   (when (and (not (nil? is-submitting))
@@ -49,11 +48,6 @@
       [input/mount-input {:node node
                           :form-state form-state
                           :is-submitting is-submitting}]
-
-      (rf-node? node :rf/textarea)
-      [textarea/mount-textarea {:node node
-                                :form-state form-state
-                                :is-submitting is-submitting}]
 
       (rf-node? node :rf/field-error)
       [field-error/mount-field-error {:node node
@@ -99,19 +93,15 @@
       (fn [form-data html]
         [postwalk (walk-node form-data form-state) html])})))
 
-(defn input
+
+(defn form-field
   [{:keys [error-class
            field-key
            form-field-class
            hint-class
-           input-class
-           type
            label
-           label-class
-           placeholder]
-    :or {default-value ""
-         type :text}
-    :as params}]
+           label-class]}
+   field]
   [:div {:class (add-class "reagent-form-field" form-field-class)}
    (when label
      [:div {:class (add-class "reagent-form-label" label-class)}
@@ -123,61 +113,46 @@
    [:p {:rf/field-error {:field-key field-key}
         :class (add-class "reagent-form-error" error-class)}]
 
-   [:input (cond-> {:rf/input (select-keys params [:default-errors
-                                                   :default-hints
-                                                   :default-value
-                                                   :field-key
-                                                   :hint-triggers
-                                                   :masks
-                                                   :on-blur
-                                                   :on-change
-                                                   :transformers
-                                                   :validators
-                                                   :validate-on-blur])
-                    :id field-key
-                    :type type
-                    :class (add-class "reagent-form-input" input-class)}
-             placeholder (assoc :placeholder placeholder))]])
+   field])
+
+(defn input
+  [{:keys [field-key] :as params}]
+  (form-field
+   params
+   [:input
+    (merge {:rf/input (select-keys params
+                                   [:default-errors
+                                    :default-hints
+                                    :default-value
+                                    :field-key
+                                    :hint-triggers
+                                    :masks
+                                    :on-blur
+                                    :on-change
+                                    :transformers
+                                    :validators
+                                    :validate-on-blur])}
+           (select-keys params [:class
+                                :id
+                                :placeholder
+                                :style]))]))
 
 (defn textarea
-  [{:keys [error-class
-           field-key
-           form-field-class
-           hint-class
-           style
-           textarea-class
-           type
-           label
-           label-class
-           placeholder]
-    :or {default-value ""
-         style {}
-         type :text}
-    :as params}]
-  [:div {:class (add-class "reagent-form-field" form-field-class)}
-   (when label
-     [:div {:class (add-class "reagent-form-label" label-class)}
-      [:label {:for field-key} label]])
-
-   [:p {:rf/field-hint {:field-key field-key}
-        :class (add-class "reagent-form-hint" hint-class)}]
-
-   [:p {:rf/field-error {:field-key field-key}
-        :class (add-class "reagent-form-error" error-class)}]
-
-   [:textarea (cond-> {:rf/textarea (select-keys params [:default-errors
-                                                         :default-hints
-                                                         :default-value
-                                                         :field-key
-                                                         :hint-triggers
-                                                         :masks
-                                                         :on-blur
-                                                         :on-change
-                                                         :transformers
-                                                         :validators
-                                                         :validate-on-blur])
-                       :id field-key
-                       :style style
-                       :class (add-class "reagent-form-textarea"
-                                         textarea-class)}
-                placeholder (assoc :placeholder placeholder))]])
+  [{:keys [field-key] :as params}]
+  (form-field
+   params
+   [:textarea (merge {:rf/input (select-keys params [:default-errors
+                                                     :default-hints
+                                                     :default-value
+                                                     :field-key
+                                                     :hint-triggers
+                                                     :masks
+                                                     :on-blur
+                                                     :on-change
+                                                     :transformers
+                                                     :validators
+                                                     :validate-on-blur])}
+                     (select-keys params [:class
+                                          :id
+                                          :placeholder
+                                          :style]))]))

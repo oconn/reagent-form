@@ -35,6 +35,7 @@
                 transformers
                 validators
                 validate-on-blur]
+         :or {validate-on-blur true}
          :as rf-params}
         (:rf/input params)
 
@@ -50,29 +51,26 @@
 
         mounted-node
         (assoc-in node [1]
-                  (cond->
-                      (-> params
-                          (dissoc :rf/input)
-                          (merge {:ref
-                                  #(reset! !ref %)
+                  (-> params
+                      (dissoc :rf/input)
+                      (merge {:ref
+                              #(reset! !ref %)
 
-                                  :on-blur
-                                  (fn [event]
-                                    (update-field-value-fn
-                                     (-> event .-target get-value))
+                              :on-blur
+                              (fn [event]
+                                (update-field-value-fn
+                                 (-> event .-target get-value))
 
-                                    (when validate-on-blur
-                                      (validate-field! form-state field-key))
+                                (when validate-on-blur
+                                  (validate-field! form-state field-key))
 
-                                    ((or on-blur identity) event))
+                                ((or on-blur identity) event))
 
-                                  :on-change
-                                  (fn [event]
-                                    (update-field-value-fn
-                                     (-> event .-target get-value))
-                                    ((or on-change identity) event))}))
-                    @is-submitting
-                    (assoc :disabled true)))]
+                              :on-change
+                              (fn [event]
+                                (update-field-value-fn
+                                 (-> event .-target get-value))
+                                ((or on-change identity) event))})))]
 
     (when-not field-key
       (throw (js/Error. (str "Missing field-key for " node))))
@@ -88,7 +86,13 @@
                         :validators (or validators [])})
 
     (fn []
-      (update-in mounted-node [1]
-                 assoc
-                 :value
-                 (get-field-value @form-state field-key)))))
+      (let [updated-node
+            (cond-> (update-in mounted-node
+                               [1]
+                               assoc
+                               :value (get-field-value @form-state
+                                                       field-key))
+              @is-submitting
+              (assoc-in [1 :disabled] true))]
+
+        updated-node))))
