@@ -2,13 +2,19 @@
 
 (defn get-form-data
   "Returns form data in fully transformed format"
-  [form-state]
-  (reduce
-   (fn [form-data [field-key {:keys [transformers data]}]]
-     (let [field-value ((apply comp transformers) data)]
-       (assoc form-data field-key field-value)))
-   {}
-   form-state))
+  [form-state form-level-transformers]
+
+  (let [transformed-field-data
+        (reduce
+         (fn [form-data [field-key {:keys [transformers data visibility]}]]
+           (if (= visibility :hidden)
+             form-data
+             (let [field-value ((apply comp transformers) data)]
+               (assoc form-data field-key field-value))))
+         {}
+         form-state)]
+
+    ((apply comp form-level-transformers) transformed-field-data)))
 
 (defn get-form-errors
   "Returns a list of existing form errors. NOTE: This will not check
@@ -16,10 +22,12 @@
   for existing data, see `calculate-form-errors`"
   [form-state]
   (reduce
-   (fn [form-errors [field-key {:keys [errors]}]]
-     (concat form-errors (map (fn [message] {:field-key field-key
-                                            :message message})
-                              errors)))
+   (fn [form-errors [field-key {:keys [errors visibility]}]]
+     (if (= visibility :hidden)
+       form-errors
+       (concat form-errors (map (fn [message] {:field-key field-key
+                                              :message message})
+                                errors))))
    []
    form-state))
 
@@ -27,19 +35,22 @@
   "Returns form errors as tuples consisting of [field-key error-message]"
   [form-state]
   (map
-   (fn [[field-key {:keys [validators data]}]]
+   (fn [[field-key {:keys [validators data visibility]}]]
      (let [errors
-           (reduce (fn [errors {:keys [validator message]
-                               :or {message "Required"}}]
-                     ;; Validators resolve to true if valid, false if not
-                     (if (validator data)
-                       errors
-                       (conj errors {:field-key field-key
-                                     :message message})))
-                   []
-                   validators)]
+           (if (= visibility :hidden)
+             []
+             (reduce (fn [errors {:keys [validator message]
+                                 :or {message "Required"}}]
+                       ;; Validators resolve to true if valid, false if not
+                       (if (validator data)
+                         errors
+                         (conj errors {:field-key field-key
+                                       :message message})))
+                     []
+                     validators))]
        [field-key errors]))
    form-state))
+
 
 (defn invoke-or-return
   "If the provided value is a function, return the invoked value of
@@ -67,15 +78,18 @@
    :hints (invoke-or-return default-hints)
    :hint-triggers (invoke-or-return hint-triggers)
    :masks (invoke-or-return masks)
-   :validators (invoke-or-return validators)
    :transformers (invoke-or-return transformers)
+   :validators (invoke-or-return validators)
+   :visibility :visible
+
    :reset-with {:default-errors default-errors
                 :default-hints default-hints
                 :default-value default-value
                 :hint-triggers hint-triggers
                 :masks masks
                 :transformers transformers
-                :validators validators}})
+                :validators validators
+                :visibility :visible}})
 
 (defn update-form-errors!
   "Applies errors to form state"
@@ -115,11 +129,23 @@
 
 (defn initialize-field!
   "Initialized a field data structure"
-  [form-state
-   field-key
-   field-state]
+  [form-state field-key field-state]
   (swap! form-state
          #(assoc % field-key (format-field-state field-state))))
+
+(defn show-field!
+  "Marks a field as visible"
+  [form-state field-key]
+  (let [{:keys [visibility]} (field-key @form-state)]
+    (when (= visibility :hidden)
+      (swap! form-state #(assoc-in % [field-key :visibility] :visible)))))
+
+(defn hide-field!
+  "Marks a field as hidden"
+  [form-state field-key]
+  (let [{:keys [visibility]} (field-key @form-state)]
+    (when (= visibility :visible)
+      (swap! form-state #(assoc-in % [field-key :visibility] :hidden)))))
 
 (defn update-field-value!
   "Updates a form with field level changes"

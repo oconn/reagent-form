@@ -3,6 +3,7 @@
             [reagent.core :as reagent]
             [reagent-form.components.form :as form]
             [reagent-form.components.input :as input]
+            [reagent-form.components.hidden-field :as hidden-field]
             [reagent-form.components.field-error :as field-error]
             [reagent-form.components.field-hint :as field-hint]
             [reagent-form.components.form-errors :as form-errors]
@@ -66,6 +67,10 @@
                                           :form-state form-state
                                           :is-submitting is-submitting}]
 
+      (rf-node? node :rf/hidden-field)
+      [hidden-field/mount-hidden-field {:node node
+                                        :form-state form-state}]
+
       (rf-node? node :rf/custom-field)
       (render-custom-field {:node node
                             :form-state form-state
@@ -98,11 +103,14 @@
   [{:keys [error-class
            field-key
            form-field-class
+           hide-on
            hint-class
            label
            label-class]}
    field]
-  [:div {:class (add-class "reagent-form-field" form-field-class)}
+  [:div (cond-> {:class (add-class "reagent-form-field" form-field-class)}
+          hide-on (merge {:rf/hidden-field {:hide-on hide-on
+                                            :field-key field-key}}))
    (when label
      [:div {:class (add-class "reagent-form-label" label-class)}
       [:label {:for field-key} label]])
@@ -115,43 +123,38 @@
 
    field])
 
+(def rf-params
+  [:default-errors
+   :default-hints
+   :default-value
+   :field-key
+   :hide-on
+   :hint-triggers
+   :masks
+   :on-blur
+   :on-change
+   :transformers
+   :validators
+   :validate-on-blur])
+
 (defn input
   [{:keys [field-key] :as params}]
   (form-field
    params
    [:input
-    (merge {:rf/input (select-keys params
-                                   [:default-errors
-                                    :default-hints
-                                    :default-value
-                                    :field-key
-                                    :hint-triggers
-                                    :masks
-                                    :on-blur
-                                    :on-change
-                                    :transformers
-                                    :validators
-                                    :validate-on-blur])}
-           (select-keys params [:class
+    (merge {:rf/input (select-keys params (conj rf-params :type))}
+           (select-keys params [:checked
+                                :class
                                 :id
                                 :placeholder
-                                :style]))]))
+                                :style
+                                :type]))]))
 
 (defn textarea
   [{:keys [field-key] :as params}]
   (form-field
    params
-   [:textarea (merge {:rf/input (select-keys params [:default-errors
-                                                     :default-hints
-                                                     :default-value
-                                                     :field-key
-                                                     :hint-triggers
-                                                     :masks
-                                                     :on-blur
-                                                     :on-change
-                                                     :transformers
-                                                     :validators
-                                                     :validate-on-blur])}
+   [:textarea (merge {:rf/input (select-keys params rf-params)}
                      (select-keys params [:class
                                           :id
                                           :placeholder

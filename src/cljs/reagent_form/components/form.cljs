@@ -8,8 +8,10 @@
   (let [params
         (second node)
 
-        {:keys [on-submit]
-         :or {on-submit identity}}
+        {:keys [on-submit
+                transformers]
+         :or {on-submit identity
+              transformers []}}
         (:rf/form params)
 
         mounted-node
@@ -25,6 +27,7 @@
                                                  @is-submitting
                                                  false)))
 
-                                 (on-submit (get-form-data @form-state)))))))]
+                                 (on-submit (get-form-data @form-state
+                                                           transformers)))))))]
     (fn []
       mounted-node)))

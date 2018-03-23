@@ -11,9 +11,15 @@
   [target]
   (let [type (.-type target)]
     (case type
-    "radio" (.-id target)
-    "checkbox" (.-checked target)
-    (.-value target))))
+      "radio" (.-id target)
+      "checkbox" (.-checked target)
+      (.-value target))))
+
+(defn- get-default-value
+  [default-value type]
+  (case type
+    :checkbox (or default-value false)
+    (or default-value "")))
 
 (defn mount-input
   [{:keys [node is-submitting form-state]}]
@@ -33,6 +39,7 @@
                 on-change
                 placeholder
                 transformers
+                type
                 validators
                 validate-on-blur]
          :or {validate-on-blur true}
@@ -79,19 +86,25 @@
                        field-key
                        {:default-errors (or default-errors [])
                         :default-hints (or default-hints [])
-                        :default-value default-value
+                        :default-value (get-default-value default-value type)
                         :hint-triggers (or hint-triggers [])
                         :masks (or masks [])
                         :transformers (or transformers [])
                         :validators (or validators [])})
 
     (fn []
-      (let [updated-node
+      (let [field-value
+            (get-field-value @form-state field-key)
+
+            updated-node
             (cond-> (update-in mounted-node
                                [1]
                                assoc
-                               :value (get-field-value @form-state
-                                                       field-key))
+                               :value field-value)
+
+              (= type :checkbox)
+              (assoc-in [1 :checked] field-value)
+
               @is-submitting
               (assoc-in [1 :disabled] true))]
 
