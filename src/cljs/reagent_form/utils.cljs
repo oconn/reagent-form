@@ -9,7 +9,7 @@
          (fn [form-data [field-key {:keys [transformers data visibility]}]]
            (if (= visibility :hidden)
              form-data
-             (let [field-value ((apply comp transformers) data)]
+             (let [field-value ((apply comp (reverse transformers)) data)]
                (assoc form-data field-key field-value))))
          {}
          form-state)]

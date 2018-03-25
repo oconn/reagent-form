@@ -1,4 +1,4 @@
-(ns reagent-form.components.input
+(ns reagent-form.components.select-input
   (:require [reagent-form.utils :refer [invoke-or-return
                                         initialize-field!
                                         update-field-value!
@@ -6,22 +6,24 @@
                                         get-field-value
                                         get-field-errors]]))
 
-(defn- get-value
-  "Returns an inputs value"
-  [target]
-  (let [type (.-type target)]
-    (case type
-      "radio" (.-id target)
-      "checkbox" (.-checked target)
-      (.-value target))))
+(defn- format-select-value
+  [selected-value options]
+  (->> options
+       (map (fn [{:keys [value] :as option}]
+              (if (= selected-value value)
+                (assoc option :selected true)
+                (assoc option :selected false))))
+       (vec)))
 
-(defn- get-default-value
-  [default-value type]
-  (case type
-    :checkbox (or default-value false)
-    (or default-value "")))
+(defn- get-select-value
+  [options]
+  (->> options
+       (filter #(= (and (:selected %)
+                        (not (:disabled %))) true))
+       (first)
+       :value))
 
-(defn mount-input
+(defn mount-select-input
   [{:keys [node is-submitting form-state]}]
   (let [!ref
         (atom nil)
@@ -34,21 +36,24 @@
                 default-value
                 field-key
                 hint-triggers
-                masks
                 on-blur
                 on-change
+                options
                 placeholder
                 transformers
-                type
                 validators
                 validate-on-blur]
          :or {validate-on-blur true}
          :as rf-params}
-        (:rf/input params)
+        (:rf/select-input params)
 
         update-field-value-fn
         #(do
-           (update-field-value! form-state field-key %)
+           (update-field-value! form-state
+                                field-key
+                                (format-select-value
+                                 %
+                                 (get-field-value @form-state field-key)))
 
            ;; Once the form has been submitted, live (on-change) validation will
            ;; take over for inputs until the error is cleared, then it will
@@ -59,14 +64,14 @@
         mounted-node
         (assoc-in node [1]
                   (-> params
-                      (dissoc :rf/input)
+                      (dissoc :rf/select-input)
                       (merge {:ref
                               #(reset! !ref %)
 
                               :on-blur
                               (fn [event]
                                 (update-field-value-fn
-                                 (-> event .-target get-value))
+                                 (-> event .-target .-value))
 
                                 (when validate-on-blur
                                   (validate-field! form-state field-key))
@@ -76,7 +81,7 @@
                               :on-change
                               (fn [event]
                                 (update-field-value-fn
-                                 (-> event .-target get-value))
+                                 (-> event .-target .-value))
 
                                 ((or on-change identity) event))})))]
 
@@ -87,26 +92,35 @@
                        field-key
                        {:default-errors (or default-errors [])
                         :default-hints (or default-hints [])
-                        :default-value (get-default-value default-value type)
+                        :default-value (format-select-value default-value options)
                         :hint-triggers (or hint-triggers [])
-                        :masks (or masks [])
-                        :transformers (or transformers [])
+                        :masks []
+                        :transformers (or (into [get-select-value]
+                                                transformers)
+                                          [get-select-value])
                         :validators (or validators [])})
 
     (fn []
       (let [field-value
             (get-field-value @form-state field-key)
 
+            selected-value
+            (->> field-value
+                 (filter #(true? (:selected %)))
+                 (first)
+                 (:value))
+
             updated-node
-            (cond-> (update-in mounted-node
-                               [1]
-                               assoc
-                               :value field-value)
+            [(first mounted-node)
+             (cond-> (second mounted-node)
+               selected-value
+               (assoc :value selected-value)
 
-              (= type :checkbox)
-              (assoc-in [1 :checked] field-value)
-
-              @is-submitting
-              (assoc-in [1 :disabled] true))]
+               @is-submitting
+               (assoc :disabled true))
+             (for [{:keys [display value selected disabled]} field-value]
+               ^{:key value} [:option (cond-> {:value value}
+                                        disabled (assoc :disabled true))
+                              display])]]
 
         updated-node))))

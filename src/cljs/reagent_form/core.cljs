@@ -3,6 +3,7 @@
             [reagent.core :as reagent]
             [reagent-form.components.form :as form]
             [reagent-form.components.input :as input]
+            [reagent-form.components.select-input :as select-input]
             [reagent-form.components.hidden-field :as hidden-field]
             [reagent-form.components.field-error :as field-error]
             [reagent-form.components.field-hint :as field-hint]
@@ -49,6 +50,11 @@
       [input/mount-input {:node node
                           :form-state form-state
                           :is-submitting is-submitting}]
+
+      (rf-node? node :rf/select-input)
+      [select-input/mount-select-input {:node node
+                                        :form-state form-state
+                                        :is-submitting is-submitting}]
 
       (rf-node? node :rf/field-error)
       [field-error/mount-field-error {:node node
@@ -112,18 +118,18 @@
           hide-on (merge {:rf/hidden-field {:hide-on hide-on
                                             :field-key field-key}}))
    (when label
-     [:div {:class (add-class "reagent-form-label" label-class)}
-      [:label {:for field-key} label]])
+     [:label {:class (add-class "reagent-form-field-label" label-class)
+              :for field-key} label])
 
    [:p {:rf/field-hint {:field-key field-key}
-        :class (add-class "reagent-form-hint" hint-class)}]
+        :class (add-class "reagent-form-field-hint" hint-class)}]
 
    [:p {:rf/field-error {:field-key field-key}
-        :class (add-class "reagent-form-error" error-class)}]
+        :class (add-class "reagent-form-field-error" error-class)}]
 
    field])
 
-(def rf-params
+(def rf-input-params
   [:default-errors
    :default-hints
    :default-value
@@ -142,7 +148,7 @@
   (form-field
    params
    [:input
-    (merge {:rf/input (select-keys params (conj rf-params :type))}
+    (merge {:rf/input (select-keys params (conj rf-input-params :type))}
            (select-keys params [:checked
                                 :class
                                 :id
@@ -154,8 +160,48 @@
   [{:keys [field-key] :as params}]
   (form-field
    params
-   [:textarea (merge {:rf/input (select-keys params rf-params)}
-                     (select-keys params [:class
-                                          :id
-                                          :placeholder
-                                          :style]))]))
+   [:textarea
+    (merge {:rf/input (select-keys params rf-input-params)}
+           (select-keys params [:class
+                                :id
+                                :placeholder
+                                :style]))]))
+
+(defn select-input
+  [{:keys [field-key] :as params}]
+  (form-field
+   params
+   [:select
+    (merge {:rf/select-input (select-keys params (conj rf-input-params
+                                                       :options))}
+           (select-keys params [:class
+                                :id
+                                :placeholder
+                                :style]))]))
+
+(defn custom-field
+  [{:keys [field-key] :as params}]
+  (form-field
+   params
+   [:div {:rf/custom-field params}]))
+
+(defn submit-button
+  [{:keys [default-text
+           form-errors-class
+           submission-text
+           submit-button-class
+           submit-button-container-class]
+    :or {default-text "Submit"}}]
+
+  [:div {:class (add-class "reagent-form-submit-button-container"
+                           submit-button-container-class)}
+   [:p {:rf/form-errors {}
+        :class (add-class "reagent-form-errors"
+                          form-errors-class)}]
+
+   [:input {:rf/submit-button {:submission-text (or submission-text
+                                                    default-text)}
+            :class (add-class "reagent-form-submit-button"
+                              submit-button-class)
+            :type :submit
+            :value default-text}]])
