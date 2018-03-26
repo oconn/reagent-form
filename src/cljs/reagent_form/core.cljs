@@ -188,6 +188,7 @@
 (defn submit-button
   [{:keys [default-text
            form-errors-class
+           form-error-message
            submission-text
            submit-button-class
            submit-button-container-class]
@@ -195,7 +196,9 @@
 
   [:div {:class (add-class "reagent-form-submit-button-container"
                            submit-button-container-class)}
-   [:p {:rf/form-errors {}
+   [:p {:rf/form-errors (cond-> {}
+                          form-error-message (assoc :error-message
+                                                    form-error-message))
         :class (add-class "reagent-form-errors"
                           form-errors-class)}]
 
