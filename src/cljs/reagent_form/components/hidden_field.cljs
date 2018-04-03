@@ -12,11 +12,10 @@
         mounted-node
         (update-in node [1] dissoc :rf/hidden-field)]
     (fn []
-      (let [hidden (hide-on @form-state)]
-
+      (let [hidden (hide-on @form-state)
+            hidden-node (assoc-in mounted-node [1 :style :display] :none)]
         (if hidden
           (hide-field! form-state field-key)
           (show-field! form-state field-key))
 
-        (when-not hidden
-          mounted-node)))))
+        (if hidden hidden-node mounted-node)))))
