@@ -1,5 +1,20 @@
 (ns reagent-form.utils)
 
+(defn ensure-field-key-or-throw
+  "Ensures the existance and validity of a field's field-key"
+  [field-key node]
+  (let [reserved-field-keys #{:reagent-form}]
+    (cond
+      (nil? field-key)
+      (throw (js/Error. (str "Missing field-key for " node)))
+
+      (contains? reserved-field-keys field-key)
+      (throw (js/Error.
+              (str "Reserved field-key '" field-key "' for " node)))
+
+      :else
+      nil)))
+
 (defn get-form-data
   "Returns form data in fully transformed format"
   [form-state form-level-transformers]
@@ -12,7 +27,7 @@
              (let [field-value ((apply comp (reverse transformers)) data)]
                (assoc form-data field-key field-value))))
          {}
-         form-state)]
+         (dissoc form-state :reagent-form))]
 
     ((apply comp form-level-transformers) transformed-field-data)))
 
@@ -29,7 +44,7 @@
                                               :message message})
                                 errors))))
    []
-   form-state))
+   (dissoc form-state :reagent-form)))
 
 (defn calculate-form-errors
   "Returns form errors as tuples consisting of [field-key error-message]"
@@ -42,7 +57,9 @@
              (reduce (fn [errors {:keys [validator message]
                                  :or {message "Required"}}]
                        ;; Validators resolve to true if valid, false if not
-                       (if (validator data)
+                       (if (validator (if (= field-key :reagent-form)
+                                        form-state
+                                        data))
                          errors
                          (conj errors {:field-key field-key
                                        :message message})))
@@ -81,7 +98,6 @@
    :transformers (invoke-or-return transformers)
    :validators (invoke-or-return validators)
    :visibility :visible
-
    :reset-with {:default-errors default-errors
                 :default-hints default-hints
                 :default-value default-value
@@ -133,19 +149,22 @@
   (swap! form-state
          #(assoc % field-key (format-field-state field-state))))
 
+(defn field-hidden?
+  "Returns the hidden state of a field"
+  [form-state field-key]
+  (= :hidden (get-in form-state [field-key :visibility] :visible)))
+
 (defn show-field!
   "Marks a field as visible"
   [form-state field-key]
-  (let [{:keys [visibility]} (field-key @form-state)]
-    (when (= visibility :hidden)
-      (swap! form-state #(assoc-in % [field-key :visibility] :visible)))))
+  (when (field-hidden? @form-state field-key)
+    (swap! form-state #(assoc-in % [field-key :visibility] :visible))))
 
 (defn hide-field!
   "Marks a field as hidden"
   [form-state field-key]
-  (let [{:keys [visibility]} (field-key @form-state)]
-    (when (= visibility :visible)
-      (swap! form-state #(assoc-in % [field-key :visibility] :hidden)))))
+  (when-not (field-hidden? @form-state field-key)
+    (swap! form-state #(assoc-in % [field-key :visibility] :hidden))))
 
 (defn update-field-value!
   "Updates a form with field level changes"

@@ -1,7 +1,11 @@
 (ns reagent-form.components.form
   (:require [reagent-form.utils :refer [get-form-data
-                                        update-form-errors!
+                                        initialize-field!
                                         validate-form!]]))
+
+(defn- on-form-submit
+  [form-state is-submitting transformers]
+  )
 
 (defn mount-form
   [{:keys [form-state node is-submitting]}]
@@ -9,9 +13,11 @@
         (second node)
 
         {:keys [on-submit
-                transformers]
+                transformers
+                validators]
          :or {on-submit identity
-              transformers []}}
+              transformers []
+              validators []}}
         (:rf/form params)
 
         mounted-node
@@ -22,12 +28,22 @@
                              (fn [event]
                                (.preventDefault event)
 
-                               (when (and (validate-form! form-state)
-                                          (not (if is-submitting
-                                                 @is-submitting
-                                                 false)))
+                               (let [form-is-valid
+                                     (validate-form! form-state)
 
-                                 (on-submit (get-form-data @form-state
-                                                           transformers)))))))]
+                                     form-is-not-submitting
+                                     (not (if is-submitting
+                                            @is-submitting
+                                            false))]
+
+                                 (when (and form-is-valid
+                                            form-is-not-submitting)
+
+                                   (on-submit (get-form-data @form-state
+                                                             transformers))))))))]
+
+    (when validators
+      (initialize-field! form-state :reagent-form {:validators validators}))
+
     (fn []
       mounted-node)))

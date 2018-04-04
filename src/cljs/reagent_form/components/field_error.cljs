@@ -1,5 +1,6 @@
 (ns reagent-form.components.field-error
-  (:require [reagent-form.utils :refer [get-field-errors]]))
+  (:require [reagent-form.utils :refer [get-field-errors
+                                        field-hidden?]]))
 
 (defn mount-field-error
   [{:keys [node form-state]}]
@@ -14,6 +15,8 @@
                   (-> params
                       (dissoc :rf/field-error)))]
     (fn []
-      (let [error (first (get-field-errors @form-state field-key))]
-        (when error
+      (let [hidden (field-hidden? @form-state field-key)
+            error (first (get-field-errors @form-state field-key))]
+        (when (and error
+                   (not hidden))
           [assoc-in mounted-node [2] error])))))

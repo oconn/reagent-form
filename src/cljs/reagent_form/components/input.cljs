@@ -4,7 +4,8 @@
                                         update-field-value!
                                         validate-field!
                                         get-field-value
-                                        get-field-errors]]))
+                                        get-field-errors
+                                        ensure-field-key-or-throw]]))
 
 (defn- get-value
   "Returns an inputs value"
@@ -80,8 +81,7 @@
 
                                 ((or on-change identity) event))})))]
 
-    (when-not field-key
-      (throw (js/Error. (str "Missing field-key for " node))))
+    (ensure-field-key-or-throw field-key node)
 
     (initialize-field! form-state
                        field-key

@@ -1,6 +1,7 @@
 (ns reagent-form.components.hidden-field
   (:require [reagent-form.utils :refer [show-field!
-                                        hide-field!]]))
+                                        hide-field!
+                                        ensure-field-key-or-throw]]))
 
 (defn- mount-hidden-field
   "Hides a field if hide-on returns true"
@@ -11,11 +12,15 @@
 
         mounted-node
         (update-in node [1] dissoc :rf/hidden-field)]
+
+    (ensure-field-key-or-throw field-key node)
+
     (fn []
-      (let [hidden (hide-on @form-state)
+      (let [should-hide (hide-on @form-state)
             hidden-node (assoc-in mounted-node [1 :style :display] :none)]
-        (if hidden
+
+        (if should-hide
           (hide-field! form-state field-key)
           (show-field! form-state field-key))
 
-        (if hidden hidden-node mounted-node)))))
+        (if should-hide hidden-node mounted-node)))))
