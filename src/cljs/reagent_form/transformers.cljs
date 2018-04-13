@@ -1,6 +1,5 @@
 (ns reagent-form.transformers
-  (:require [cognitect.transit :as t]
-            [clojure.string]))
+  (:require [clojure.string]))
 
 (def ensure-lower
   "Forces lower case"
@@ -35,8 +34,3 @@
   (if (empty? value)
     nil
     (js/parseInt value)))
-
-(defn str->bigdec
-  "Converts a string to bigdec (transit tagged value)"
-  [value]
-  (t/bigdec value))

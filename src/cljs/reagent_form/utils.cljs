@@ -1,5 +1,14 @@
 (ns reagent-form.utils)
 
+;; Utils
+
+(defn add-class
+  "Appends a class to an existing class if it exists"
+  [class-name custom-class]
+  (str class-name
+       (when custom-class
+         (str " " custom-class))))
+
 (defn invoke-or-return
   "If the provided value is a function, return the invoked value of
   the function, otherwise return the value"
@@ -11,12 +20,14 @@
   [{:keys [default-errors
            default-hints
            default-value
+           default-visibility
            hint-triggers
            masks
            transformers
            validators]
     :or {default-errors []
          default-hints []
+         default-visibility :visible
          hint-triggers []
          masks []
          transformers []
@@ -28,7 +39,7 @@
    :masks (invoke-or-return masks)
    :transformers (invoke-or-return transformers)
    :validators (invoke-or-return validators)
-   :visibility :visible
+   :visibility (invoke-or-return default-visibility)
    :reset-with {:default-errors default-errors
                 :default-hints default-hints
                 :default-value default-value
@@ -36,7 +47,7 @@
                 :masks masks
                 :transformers transformers
                 :validators validators
-                :visibility :visible}})
+                :visibility default-visibility}})
 
 (defn ensure-field-key-or-throw
   "Ensures the existance and validity of a field's field-key"
@@ -53,27 +64,38 @@
       :else
       nil)))
 
-(defn initialize-field!
-  "Initialized a field data structure"
-  [form-state field-key field-state]
-  (swap! form-state
-         #(assoc % field-key (format-field-state field-state))))
+;; Getters
+
+(defn get-field-value
+  "Returns the value of a field"
+  [form-state field-key]
+  (get-in form-state [field-key :data]))
+
+(defn get-field-errors
+  "Returns the field's errors"
+  [form-state field-key]
+  (get-in form-state [field-key :errors]))
+
+(defn get-field-hints
+  "Returns the field's hints"
+  [form-state field-key]
+  (get-in form-state [field-key :hints]))
 
 (defn get-form-data
   "Returns form data in fully transformed format"
-  [form-state form-level-transformers]
-
-  (let [transformed-field-data
-        (reduce
-         (fn [form-data [field-key {:keys [transformers data visibility]}]]
-           (if (= visibility :hidden)
-             form-data
-             (let [field-value ((apply comp (reverse transformers)) data)]
-               (assoc form-data field-key field-value))))
-         {}
-         (dissoc form-state :reagent-form))]
-
-    ((apply comp form-level-transformers) transformed-field-data)))
+  ([form-state]
+   (get-form-data form-state []))
+  ([form-state form-level-transformers]
+   (let [transformed-field-data
+         (reduce
+          (fn [form-data [field-key {:keys [transformers data visibility]}]]
+            (if (= visibility :hidden)
+              form-data
+              (let [field-value ((apply comp (reverse transformers)) data)]
+                (assoc form-data field-key field-value))))
+          {}
+          (dissoc form-state :reagent-form))]
+     ((apply comp form-level-transformers) transformed-field-data))))
 
 (defn get-form-errors
   "Returns a list of existing form errors. NOTE: This will not check
@@ -112,8 +134,50 @@
        [field-key errors]))
    form-state))
 
+(defn field-hidden?
+  "Returns the hidden state of a field"
+  [form-state field-key]
+  (= :hidden (get-in form-state [field-key :visibility] :visible)))
 
+;; Setters
 
+(defn initialize-field!
+  "Initialized a field data structure"
+  [form-state field-key field-state]
+  (swap! form-state
+         #(assoc % field-key (format-field-state field-state))))
+
+(defn update-field-value!
+  "Updates a form with field level changes"
+  [form-state field-key value]
+  (let [{:keys [masks hint-triggers]} (field-key @form-state)
+        updated-state (assoc-in @form-state
+                                [field-key :data]
+                                ((apply comp masks) value))]
+    (swap! form-state
+           #(cond-> updated-state
+              (not (empty? hint-triggers))
+              (assoc-in [field-key :hints]
+                        (reduce (fn [hints {:keys [trigger message]}]
+                                  (if (trigger (get-field-value updated-state
+                                                                field-key))
+                                    (conj hints message)
+                                    hints))
+                                []
+                                hint-triggers))))))
+
+(defn validate-field!
+  "Checks to see if a field is valid and updates errors if they exist"
+  [form-state field-key]
+  (let [{:keys [validators data]} (field-key @form-state)]
+    (let [errors (reduce (fn [errors {:keys [validator message]
+                                     :or {message "Required"}}]
+                           (if (validator data)
+                             errors
+                             (conj errors message)))
+                         []
+                         validators)]
+      (swap! form-state assoc-in [field-key :errors] errors))))
 
 (defn update-form-errors!
   "Applies errors to form state"
@@ -151,13 +215,6 @@
                {})
        (reset! form-state)))
 
-
-
-(defn field-hidden?
-  "Returns the hidden state of a field"
-  [form-state field-key]
-  (= :hidden (get-in form-state [field-key :visibility] :visible)))
-
 (defn show-field!
   "Marks a field as visible"
   [form-state field-key]
@@ -169,55 +226,3 @@
   [form-state field-key]
   (when-not (field-hidden? @form-state field-key)
     (swap! form-state #(assoc-in % [field-key :visibility] :hidden))))
-
-(defn update-field-value!
-  "Updates a form with field level changes"
-  [form-state field-key value]
-  (let [{:keys [masks hint-triggers]} (field-key @form-state)]
-    (swap! form-state
-           #(cond-> (assoc-in %
-                              [field-key :data]
-                              ((apply comp masks) value))
-              (not (empty? hint-triggers))
-              (assoc-in [field-key :hints]
-                        (reduce (fn [hints {:keys [trigger message]}]
-                                  (if (trigger value)
-                                    (conj hints message)
-                                    hints))
-                                []
-                                hint-triggers))))))
-
-(defn validate-field!
-  "Checks to see if a field is valid an updates errors if they exist"
-  [form-state field-key]
-  (let [{:keys [validators data]} (field-key @form-state)]
-    (let [errors (reduce (fn [errors {:keys [validator message]
-                                     :or {message "Required"}}]
-                           (if (validator data)
-                             errors
-                             (conj errors message)))
-                         []
-                         validators)]
-      (swap! form-state assoc-in [field-key :errors] errors))))
-
-(defn get-field-value
-  "Returns the value of a field"
-  [form-state field-key]
-  (get-in form-state [field-key :data]))
-
-(defn get-field-errors
-  "Returns the field's errors"
-  [form-state field-key]
-  (get-in form-state [field-key :errors]))
-
-(defn get-field-hints
-  "Returns the field's hints"
-  [form-state field-key]
-  (get-in form-state [field-key :hints]))
-
-(defn add-class
-  "Appends a class to an existing class if it exists"
-  [class-name custom-class]
-  (str class-name
-       (when custom-class
-         (str " " custom-class))))

@@ -104,7 +104,6 @@
       (fn [form-data html]
         [postwalk (walk-node form-data form-state) html])})))
 
-
 (defn form-field
   [{:keys [error-class
            field-key
