@@ -1,0 +1,7 @@
+{:deps
+ {org.clojure/clojurescript {:mvn/version "1.10.64" :classifier "aot"}}
+
+ :aliases
+ {:test {:extra-deps {olical/cljs-test-runner {:mvn/version "0.1.1"}}
+         :extra-paths ["src/cljs"]
+         :main-opts ["-m" "cljs-test-runner.main"]}}}

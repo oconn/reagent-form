@@ -1,5 +1,43 @@
 (ns reagent-form.utils)
 
+(defn invoke-or-return
+  "If the provided value is a function, return the invoked value of
+  the function, otherwise return the value"
+  [value]
+  (if (fn? value) (value) value))
+
+(defn format-field-state
+  "Takes field state and returns a formated version"
+  [{:keys [default-errors
+           default-hints
+           default-value
+           hint-triggers
+           masks
+           transformers
+           validators]
+    :or {default-errors []
+         default-hints []
+         hint-triggers []
+         masks []
+         transformers []
+         validators []}}]
+  {:data (invoke-or-return default-value)
+   :errors (invoke-or-return default-errors)
+   :hints (invoke-or-return default-hints)
+   :hint-triggers (invoke-or-return hint-triggers)
+   :masks (invoke-or-return masks)
+   :transformers (invoke-or-return transformers)
+   :validators (invoke-or-return validators)
+   :visibility :visible
+   :reset-with {:default-errors default-errors
+                :default-hints default-hints
+                :default-value default-value
+                :hint-triggers hint-triggers
+                :masks masks
+                :transformers transformers
+                :validators validators
+                :visibility :visible}})
+
 (defn ensure-field-key-or-throw
   "Ensures the existance and validity of a field's field-key"
   [field-key node]
@@ -14,6 +52,12 @@
 
       :else
       nil)))
+
+(defn initialize-field!
+  "Initialized a field data structure"
+  [form-state field-key field-state]
+  (swap! form-state
+         #(assoc % field-key (format-field-state field-state))))
 
 (defn get-form-data
   "Returns form data in fully transformed format"
@@ -69,43 +113,7 @@
    form-state))
 
 
-(defn invoke-or-return
-  "If the provided value is a function, return the invoked value of
-  the function, otherwise return the value"
-  [value]
-  (if (fn? value) (value) value))
 
-(defn format-field-state
-  "Takes field state and returns a formated version"
-  [{:keys [default-errors
-           default-hints
-           default-value
-           hint-triggers
-           masks
-           transformers
-           validators]
-    :or {default-errors []
-         default-hints []
-         hint-triggers []
-         masks []
-         transformers []
-         validators []}}]
-  {:data (invoke-or-return default-value)
-   :errors (invoke-or-return default-errors)
-   :hints (invoke-or-return default-hints)
-   :hint-triggers (invoke-or-return hint-triggers)
-   :masks (invoke-or-return masks)
-   :transformers (invoke-or-return transformers)
-   :validators (invoke-or-return validators)
-   :visibility :visible
-   :reset-with {:default-errors default-errors
-                :default-hints default-hints
-                :default-value default-value
-                :hint-triggers hint-triggers
-                :masks masks
-                :transformers transformers
-                :validators validators
-                :visibility :visible}})
 
 (defn update-form-errors!
   "Applies errors to form state"
@@ -143,11 +151,7 @@
                {})
        (reset! form-state)))
 
-(defn initialize-field!
-  "Initialized a field data structure"
-  [form-state field-key field-state]
-  (swap! form-state
-         #(assoc % field-key (format-field-state field-state))))
+
 
 (defn field-hidden?
   "Returns the hidden state of a field"
