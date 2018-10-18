@@ -2,6 +2,10 @@
 
 ;; Utils
 
+(defn reagent-form-error
+  [error-message]
+  (throw (js/Error. (str "Reagent Form: " error-message))))
+
 (defn add-class
   "Appends a class to an existing class if it exists"
   [class-name custom-class]

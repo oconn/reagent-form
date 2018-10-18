@@ -1,12 +1,21 @@
 (ns reagent-form.transformers
-  (:require [clojure.string]))
+  (:require [clojure.string]
 
-(def ensure-lower
+            [reagent-form.utils :as u]))
+
+(defn ensure-lower
   "Forces lower case"
-  clojure.string/lower-case)
-(def trim
+  [val]
+  (if (string? val)
+    (clojure.string/lower-case val)
+    (u/reagent-form-error "Only strings can be forced to lower")))
+
+(defn trim
   "Trims whitespace"
-  clojure.string/trim)
+  [val]
+  (if (string? val)
+    (clojure.string/trim val)
+    (u/reagent-form-error "Only strings can be trimmed.")))
 
 (defn alpha-only
   "Only allow non digit values"
@@ -15,13 +24,25 @@
 
 (defn digit-only
   "Only allow digits"
-  [value]
-  (clojure.string/replace value #"\D" ""))
+  [val]
+  (let [update-exp #"\D"]
+    (if (string? val)
+      (clojure.string/replace val update-exp "")
+      (-> val
+          (str)
+          (clojure.string/replace update-exp "")
+          (js/parseInt)))))
 
 (defn float-only
   "Only allow digits and decimal point"
-  [value]
-  (clojure.string/replace value #"[^0-9\.]" ""))
+  [val]
+  (let [update-exp #"[^0-9\.]"]
+    (if (string? val)
+      (clojure.string/replace val update-exp "")
+      (-> val
+          (str)
+          (clojure.string/replace update-exp "")
+          (js/parseFloat)))))
 
 (defn no-whitespace
   "Disallow whitespace"
