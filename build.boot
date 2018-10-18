@@ -10,7 +10,7 @@
          '[boot.git         :refer [last-commit]])
 
 (def project 'oconn/reagent-form)
-(def +version+ "0.1.1-SNAPSHOT")
+(def +version+ "0.1.2-SNAPSHOT")
 
 (task-options!
  pom {:project     project
