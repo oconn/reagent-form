@@ -71,9 +71,6 @@
 
                               :on-blur
                               (fn [event]
-                                (update-field-value-fn
-                                 (-> event .-target .-value))
-
                                 (when validate-on-blur
                                   (validate-field! form-state field-key))
 
