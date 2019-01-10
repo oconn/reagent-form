@@ -1,6 +1,6 @@
 (set-env! :resource-paths #{"src/cljs"}
           :source-paths   #{"test/cljs"}
-          :dependencies   '[[org.clojure/clojurescript "1.10.64" :scope "provided"]
+          :dependencies   '[[org.clojure/clojurescript "1.10.439" :scope "provided"]
 
                             [adzerk/bootlaces  "0.1.13" :scope "test"]
                             [adzerk/boot-test  "1.2.0"  :scope "test"]])
