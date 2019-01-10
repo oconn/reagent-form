@@ -1,5 +1,5 @@
 {:deps
- {org.clojure/clojurescript {:mvn/version "1.10.64" :classifier "aot"}}
+ {org.clojure/clojurescript$aot {:mvn/version "1.10.64"}}
 
  :aliases
  {:test {:extra-deps {olical/cljs-test-runner {:mvn/version "0.1.1"}}
