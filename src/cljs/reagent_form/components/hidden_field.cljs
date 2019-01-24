@@ -3,7 +3,7 @@
                                         hide-field!
                                         ensure-field-key-or-throw]]))
 
-(defn- mount-hidden-field
+(defn mount-hidden-field
   "Hides a field if hide-on returns true"
   [{:keys [node form-state]}]
   (let [{:keys [hide-on field-key]
