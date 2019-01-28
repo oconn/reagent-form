@@ -190,8 +190,10 @@
            form-error-message
            submission-text
            submit-button-class
-           submit-button-container-class]
-    :or {default-text "Submit"}}]
+           submit-button-container-class
+           disabled]
+    :or {default-text "Submit"
+         disabled false}}]
 
   [:div {:class (add-class "reagent-form-submit-button-container"
                            submit-button-container-class)}
@@ -206,4 +208,5 @@
             :class (add-class "reagent-form-submit-button"
                               submit-button-class)
             :type :submit
-            :value default-text}]])
+            :value default-text
+            :disabled disabled}]])
