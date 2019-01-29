@@ -7,7 +7,8 @@
         (second node)
 
         {:keys [submission-text
-                submitting-element]}
+                submitting-element
+                is-disabled?]}
         (:rf/submit-button params)
 
         mounted-node
@@ -17,6 +18,10 @@
             submitting @is-submitting
             submit-button (cond
                             (not (empty? form-errors))
+                            (assoc-in mounted-node [1 :disabled] true)
+
+                            (and (some? is-disabled?)
+                                 (is-disabled?))
                             (assoc-in mounted-node [1 :disabled] true)
 
                             submitting
