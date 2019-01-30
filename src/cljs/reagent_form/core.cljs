@@ -186,14 +186,14 @@
 
 (defn submit-button
   [{:keys [default-text
+           is-disabled?
            form-errors-class
            form-error-message
            submission-text
            submit-button-class
-           submit-button-container-class
-           disabled]
+           submit-button-container-class]
     :or {default-text "Submit"
-         disabled false}}]
+         is-disabled? (constantly false)}}]
 
   [:div {:class (add-class "reagent-form-submit-button-container"
                            submit-button-container-class)}
@@ -204,9 +204,9 @@
                           form-errors-class)}]
 
    [:input {:rf/submit-button {:submission-text (or submission-text
-                                                    default-text)}
+                                                    default-text)
+                               :is-disabled? is-disabled?}
             :class (add-class "reagent-form-submit-button"
                               submit-button-class)
             :type :submit
-            :value default-text
-            :disabled disabled}]])
+            :value default-text}]])
