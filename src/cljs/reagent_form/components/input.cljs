@@ -30,7 +30,8 @@
         params
         (second node)
 
-        {:keys [default-errors
+        {:keys [auto-focus
+                default-errors
                 default-hints
                 default-value
                 field-key
@@ -102,6 +103,9 @@
                                [1]
                                assoc
                                :value field-value)
+
+              (true? auto-focus)
+              (assoc-in [1 :auto-focus true])
 
               (= type :checkbox)
               (assoc-in [1 :checked] field-value)

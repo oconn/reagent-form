@@ -156,12 +156,13 @@
                                 :type]))]))
 
 (defn textarea
-  [{:keys [field-key] :as params}]
+  [{:keys [field-key auto-focus] :as params :or {auto-focus false}}]
   (form-field
    params
    [:textarea
     (merge {:rf/input (select-keys params rf-input-params)}
            (select-keys params [:class
+                                :auto-focus
                                 :id
                                 :placeholder
                                 :style]))]))
