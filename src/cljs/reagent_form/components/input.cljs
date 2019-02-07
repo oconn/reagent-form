@@ -105,7 +105,7 @@
                                :value field-value)
 
               (true? auto-focus)
-              (assoc-in [1 :auto-focus true])
+              (assoc-in [1 :auto-focus] true)
 
               (= type :checkbox)
               (assoc-in [1 :checked] field-value)
