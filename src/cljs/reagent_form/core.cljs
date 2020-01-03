@@ -153,7 +153,8 @@
                                 :id
                                 :placeholder
                                 :style
-                                :type]))]))
+                                :type
+                                :disabled]))]))
 
 (defn textarea
   [{:keys [field-key auto-focus] :as params :or {auto-focus false}}]

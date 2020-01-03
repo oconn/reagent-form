@@ -16,7 +16,7 @@
                 (assoc option :selected false))))
        (vec)))
 
-(defn- get-select-value
+(defn get-select-value
   [options]
   (->> options
        (filter #(= (and (:selected %)

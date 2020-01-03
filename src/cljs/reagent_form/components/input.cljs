@@ -38,6 +38,7 @@
                 hint-triggers
                 masks
                 on-blur
+                disabled
                 on-change
                 placeholder
                 transformers
@@ -110,7 +111,8 @@
               (= type :checkbox)
               (assoc-in [1 :checked] field-value)
 
-              @is-submitting
+              (or @is-submitting
+                  (true? disabled))
               (assoc-in [1 :disabled] true))]
 
         updated-node))))
