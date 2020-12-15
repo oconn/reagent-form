@@ -1,6 +1,5 @@
 (ns reagent-form.utils-test
-  (:require [cljs.test :refer-macros [deftest is testing run-tests]]
-            [cljs.pprint :refer [pprint]]
+  (:require [cljs.test :refer-macros [deftest is testing]]
             [reagent-form.transformers :as t]
             [reagent-form.utils :as u]))
 
@@ -114,6 +113,7 @@
     (let [default-hints (constantly ["Some hints"])]
       (is (= (u/format-field-state {})
              {:data nil
+              :dirty false
               :errors []
               :hints []
               :hint-triggers []
@@ -133,6 +133,7 @@
                                     :default-errors ["Some errors"]
                                     :default-hints default-hints})
              {:data 1
+              :dirty false
               :errors ["Some errors"]
               :hints ["Some hints"]
               :hint-triggers []
@@ -171,10 +172,20 @@
     (is (= "class-a class-b" (u/add-class "class-a" "class-b")))
     (is (= "class-a" (u/add-class "class-a" nil)))))
 
+(deftest form-dirty?
+  (testing "Returns true when form-state is dirty"
+    (is (true? (u/form-dirty? (atom {:field-one {:dirty true}
+                                     :field-two {:dirty false}})))))
+
+  (testing "Returns false when form-state is clean"
+    (is (false? (u/form-dirty? (atom {:field-one {:dirty false}
+                                      :field-two {:dirty false}}))))))
+
 (deftest initialized-field!
   (testing "Adds a field to form-state when properly initialized"
     (is (= (u/initialize-field! (atom {}) :username {})
            {:username {:data nil
+                       :dirty false
                        :errors []
                        :hints []
                        :hint-triggers []

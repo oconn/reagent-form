@@ -86,16 +86,17 @@
       node)))
 
 (defn form
-  [{:keys [on-initialized
-           on-form-close]
+  [{:keys [on-initialized on-change on-form-close]
     :or {on-initialized identity
-         on-form-close identity}
-    :as form-data}
+         on-form-close identity}}
    html]
   (let [form-state (reagent/atom {})]
     (reagent/create-class
      {:component-did-mount
       (fn [_]
+        (when (some? on-change)
+          (add-watch form-state :form-state #(on-change form-state)))
+
         (on-initialized {:form-state form-state
                          :reset-form #(reset-form! form-state)}))
       :component-will-unmount

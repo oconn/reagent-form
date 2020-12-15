@@ -37,6 +37,7 @@
          transformers []
          validators []}}]
   {:data (invoke-or-return default-value)
+   :dirty false
    :errors (invoke-or-return default-errors)
    :hints (invoke-or-return default-hints)
    :hint-triggers (invoke-or-return hint-triggers)
@@ -138,6 +139,11 @@
        [field-key errors]))
    form-state))
 
+(defn form-dirty?
+  "Returns true when the form has any dirty fields"
+  [form-state]
+  (boolean (some #(:dirty (second %)) (dissoc @form-state :reagent-form))))
+
 (defn field-hidden?
   "Returns the hidden state of a field"
   [form-state field-key]
@@ -154,10 +160,17 @@
 (defn update-field-value!
   "Updates a form with field level changes"
   [form-state field-key value]
-  (let [{:keys [masks hint-triggers]} (field-key @form-state)
-        updated-state (assoc-in @form-state
-                                [field-key :data]
-                                ((apply comp masks) value))]
+  (let [{:keys [masks hint-triggers reset-with]}
+        (field-key @form-state)
+
+        {:keys [default-value]}
+        reset-with
+
+        updated-state
+        (assoc-in @form-state
+                  [field-key :data]
+                  ((apply comp masks) value))]
+
     (swap! form-state
            #(cond-> updated-state
               (not (empty? hint-triggers))
@@ -168,7 +181,10 @@
                                     (conj hints message)
                                     hints))
                                 []
-                                hint-triggers))))))
+                                hint-triggers))
+
+              :always
+              (assoc-in [field-key :dirty] (not= default-value value))))))
 
 (defn validate-field!
   "Checks to see if a field is valid and updates errors if they exist"
