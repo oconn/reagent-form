@@ -9,7 +9,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>oconn</groupId>
   <artifactId>reagent-form</artifactId>
-  <version>0.1.5-SNAPSHOT</version>
+  <version>0.1.5</version>
   <name>reagent-form</name>
   <dependencies>
     <dependency>
@@ -24,7 +24,7 @@
     </dependency>
   </dependencies>
   <build>
-    <sourceDirectory>src</sourceDirectory>
+    <sourceDirectory>src/cljs</sourceDirectory>
   </build>
   <repositories>
     <repository>
