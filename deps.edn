@@ -1,5 +1,8 @@
 {:deps
- {org.clojure/clojurescript$aot {:mvn/version "1.10.758"}}
+ {org.clojure/clojurescript {:mvn/version "1.10.758"}}
+
+ :paths
+ ["src/cljs"]
 
  :aliases
  {:test {:extra-deps {olical/cljs-test-runner {:mvn/version "0.1.1"}}
