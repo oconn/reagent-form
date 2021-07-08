@@ -155,7 +155,8 @@
                                 :placeholder
                                 :style
                                 :type
-                                :disabled]))]))
+                                :disabled
+                                :data-test]))]))
 
 (defn textarea
   [{:keys [field-key auto-focus] :as params :or {auto-focus false}}]
@@ -167,7 +168,8 @@
                                 :auto-focus
                                 :id
                                 :placeholder
-                                :style]))]))
+                                :style
+                                :data-test]))]))
 
 (defn select-input
   [{:keys [field-key] :as params}]
